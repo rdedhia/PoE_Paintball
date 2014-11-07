@@ -3,7 +3,11 @@ int marker = 12;
 Servo pan;
 Servo tilt;
 Servo loader;
-
+String incoming = "";
+String panString = "";
+String tiltString = "";
+int panCom = 0;
+int tiltCom = 0;
 
 void setup() {
   // initialze pins as outputs
@@ -24,14 +28,15 @@ void setup() {
 // the loop routine runs over and over again forever:
 void loop() {
   if (Serial.available() > 0) { //check for new data
-    int panCom = Serial.parseInt();
-    int tiltCom = Serial.parseInt();
-    Serial.println(panCom);
+    incoming = Serial.readString();
+    panString = incoming.substring(0,3);
+    tiltString = incoming.substring(4,7);
+    panCom = panString.toInt();
+    tiltCom = tiltString.toInt();
     load();
     aim(panCom, tiltCom);
     delay(500);
     fire();
-    delay(500);
   }
 }
 
@@ -47,8 +52,8 @@ void aim(int x,int y) { //moves the gimbal to the correct x and y positions
 }
 
 void load() { //load a paintball in the barrel
-  loader.write(20);
-  delay(1000);
+  loader.write(40);
+  delay(200);
   loader.write(0);
 }
 

@@ -1,6 +1,7 @@
 import serial
 import time
 import math
+import csv
 
 def main():
     """This is a PySerial testing function. In combination with the
@@ -31,9 +32,11 @@ def main():
                 tilt = "0" # don't exceed(?) min position
 
             #send the pan,tilt to the arduino program via serial port
-            ser.write(pan+','+tilt)
+            pan = int(pan) * 10000
+            tilt = int(tilt)
+            ser.write(str(pan+tilt))
         except ValueError:
-            if pan == 'q':
+            if tilt == 'q' or pan == 'q':
                 break;
             else:
                 print "please type an integer"
