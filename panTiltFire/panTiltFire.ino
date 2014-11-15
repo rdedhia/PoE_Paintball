@@ -52,9 +52,10 @@ void aim(int x,int y) { //moves the gimbal to the correct x and y positions
 }
 
 void load() { //load a paintball in the barrel
-  loader.write(40);
+  loader.write(80);
   delay(200);
-  loader.write(0);
+  loader.write(200);
+  delay(200);
 }
 
 
