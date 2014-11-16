@@ -11,7 +11,7 @@
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
-Adafruit_DCMotor *myMotor = AFMS.getMotor(1);
+Adafruit_DCMotor *panMotor = AFMS.getMotor(1);
 
 int motorspeed = 0;
 float angle;
@@ -22,7 +22,7 @@ double velocity;
 double error_p;
 double error_i;
 float kp = 2;
-float ki = .01;
+float ki = 0.001;
 float target_angle = 180;
 
 void setup() {
@@ -45,26 +45,27 @@ void loop() {
   angle = (counter % num_ticks) / 4.;
   error_p = target_angle - angle;
   error_i += error_p;
+  
   velocity = error_p*kp + error_i*ki;
-  if (velocity > 0) {
+ 
+  if (velocity >= 0) {
     if (velocity > 200) {
       velocity = 200;
     }
-    myMotor->run(FORWARD);
-    myMotor->setSpeed(velocity);
+    panMotor->run(FORWARD);
   } else {
     if (velocity < -200) {
       velocity = -200;
     }    
-    myMotor->run(BACKWARD);
-    myMotor->setSpeed(abs(velocity)); 
+    panMotor->run(BACKWARD);
   }
+ panMotor->setSpeed(abs(velocity)); 
   
   time = millis();
   if (time - ptime > 500) {
     Serial.println(angle);
-    Serial.println(error_p);
-    Serial.println(error_i);
+    Serial.println(error_p*kp);
+    Serial.println(error_i*ki);
     Serial.println(velocity);
     Serial.println("");
     ptime = time;
