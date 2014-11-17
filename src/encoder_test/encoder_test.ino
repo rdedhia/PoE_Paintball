@@ -16,13 +16,13 @@ Adafruit_DCMotor *panMotor = AFMS.getMotor(1);
 int motorspeed = 0;
 float angle;
 volatile int counter;
+volatile int counterA;
+volatile int counterB;
+volatile int counterC; 
 double time;
 double ptime;
-double velocity = 0;
-double error_p;
-double error_i;
-float kp = 10;
-float ki = 0.01;
+float kp = 2;
+float ki = 0.005;
 float target_angle = 90;
 
 void setup() {
@@ -42,34 +42,16 @@ void setup() {
 }
 
 void loop() {
-  angle = (counter % num_ticks) / 4.;
-  error_p = target_angle - angle;
-  error_i += error_p;
-  
-  velocity = error_p*kp + error_i*ki;
- 
-  if (velocity >= 0) {
-    if (velocity > 200) {
-      velocity = 200;
-    }
-    panMotor->run(FORWARD);
-  } else {
-    if (velocity < -200) {
-      velocity = -200;
-    }    
-    panMotor->run(BACKWARD);
-  }
-  if (abs(velocity) < 40) {
-    velocity = 0;
-  }
-  panMotor->setSpeed(abs(velocity)); 
+  angle = (counter % num_ticks) / 4.; 
+  panMotor->run(BACKWARD);  
+  panMotor->setSpeed(100); 
   
   time = millis();
-  if (time - ptime > 50) {
-    Serial.println(angle);
-    Serial.println(error_p*kp);
-    Serial.println(error_i*ki);
-    Serial.println(velocity);
+  if (time - ptime > 500) {
+    Serial.println(counter);
+    Serial.println(counterA);
+    Serial.println(counterB);
+    Serial.println(counterC);
     Serial.println("");
     ptime = time;
   }
@@ -80,16 +62,16 @@ void ISRchanA()
   if (digitalRead(A_pin) == digitalRead(B_pin)) {
     counter++;
   } else {
-    counter--;
+    counterA--;
   }
 }
 
 void ISRchanB()
 {
   if (digitalRead(A_pin) == digitalRead(B_pin)) {
-    counter--;
+    counterB--;
   } else {
-    counter++;
+    counterC++;
   }
 }
 
