@@ -5,7 +5,7 @@
 
 #define A_pin 2
 #define B_pin 3
-#define num_ticks 1440
+#define num_ticks 3240
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
@@ -21,8 +21,8 @@ double ptime;
 double velocity;
 double error_p;
 double error_i;
-float kp = 2;
-float ki = 0.001;
+float kp = 40;
+float ki = 0;
 float target_angle = 180;
 
 void setup() {
@@ -45,6 +45,9 @@ void loop() {
   angle = (counter % num_ticks) / 4.;
   error_p = target_angle - angle;
   error_i += error_p;
+  if (error_i > 1000) {
+    error_i = 1000;
+  }
   
   velocity = error_p*kp + error_i*ki;
  
