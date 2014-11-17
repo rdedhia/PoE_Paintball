@@ -5,7 +5,7 @@
 
 #define A_pin 2
 #define B_pin 3
-#define num_ticks 3240
+#define num_ticks 1440
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
@@ -62,13 +62,10 @@ void loop() {
     }    
     panMotor->run(BACKWARD);
   }
-  if (abs(velocity) < 40) {
-    velocity = 0;
-  }
   panMotor->setSpeed(abs(velocity)); 
   
   time = millis();
-  if (time - ptime > 50) {
+  if (time - ptime > 500) {
     Serial.println(angle);
     Serial.println(error_p*kp);
     Serial.println(error_i*ki);
