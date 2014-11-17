@@ -5,8 +5,10 @@
 
 #define p_pin 2
 #define t_pin 3
-#define pNum_ticks 1440
-#define tNum_ticks 3240
+#define p_pin_B 4
+#define t_pin_B 5
+#define pNum_ticks 720
+#define tNum_ticks 1620
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
@@ -15,39 +17,50 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *panMotor = AFMS.getMotor(1);
 Adafruit_DCMotor *tiltMotor = AFMS.getMotor(2);
 
-int pMotorspeed = 0;
-int tMotorspeed = 0;
-float pAngle;
-float tAngle
+// Encoder stuff (counters and ticks)
 volatile int pCounter;
 volatile int tCounter;
-double pTime;
-double tTime;
-double prevPtime;
-double prevTtime;
-double pVelocity;
-double tVelocity;
-double pError_p;
-double pError_i;
-double tError_p;
-double tError_i;
-float pkp = 2;
-float pki = .01;
-float tkp = 2;
-float tki = .01;
+const byte pDivider = pNum_ticks / 360.
+const float tDivider = tNum_ticks / 360.
+
+// Angle measures
+float pAngle;
+float tAngle;
 float pTarget_angle = 180;
 float tTarget_angle = 180;
 
+// Printing timing
+double time;
+double prev_time;
+
+// Motor control
+double pError_p;
+double tError_p;
+const float pkp = 30;
+const float tkp = 40;
+//double pError_i;
+//double tError_i;
+//const float pki = 0;
+//const float tki = 0;
+
+// Motor velocities
+double pVelocity;
+double tVelocity;
+
 void setup() {
   Serial.begin(9600);
-  pinMode(A_pin, INPUT);
-  pinMode(B_pin, INPUT);
+  pinMode(p_pin, INPUT);
+  pinMode(t_pin, INPUT);
+  pinMode(p_pin_B, INPUT);
+  pinMode(t_pin_B, INPUT);
   // enable internal pullup resistors
-  digitalWrite(A_pin, 1);
-  digitalWrite(B_pin, 1);
-  // using encoders
-  attachInterrupt(0, ISRchanA, CHANGE);
-  attachInterrupt(1, ISRchanB, CHANGE);
+  digitalWrite(p_pin, 1);
+  digitalWrite(t_pin, 1);
+  digitalWrite(p_pin_B, 1);
+  digitalWrite(t_pin_B, 1);
+  // using encoders with interrupts
+  attachInterrupt(0, ISR_pan, CHANGE);
+  attachInterrupt(1, ISR_tilt, CHANGE);
   // Start motor shield
   AFMS.begin();
   //tell PySerial you're ready to go
@@ -55,50 +68,82 @@ void setup() {
 }
 
 void loop() {
-  angle = (counter % num_ticks) / 4.;
-  error_p = target_angle - angle;
-  error_i += error_p;
-  velocity = error_p*kp + error_i*ki;
-  if (velocity > 0) {
-    if (velocity > 200) {
-      velocity = 200;
+  // calculating angle from counters by scaling it
+  pAngle = (pCounter % pNum_ticks) / pDivider;
+  tAngle = (tCounter % tNum_ticks) / tDivider;
+
+  // calculating and setting error terms
+  pError_p = pTarget_angle - pAngle;
+  //  pError_i += pError_p;
+  //  if (pError_i > 1000) {
+  //    pError_i = 1000;
+  //  }
+    
+    tError_p = tTarget_angle - tAngle;
+  //  tError_i += tError_p;
+  //  if (tError_i > 1000) {
+  //    tError_i = 1000;
+  //  }
+  
+  // calculating velocities and running motors from error terms
+  pVelocity = pError_p*pkp; // + pError_i*pki;
+  if (pVelocity > 0) {
+    if (pVelocity > 200) {
+      pVelocity = 200;
     }
     panMotor->run(FORWARD);
-    panMotor->setSpeed(velocity);
+    panMotor->setSpeed(pVelocity);
   } else {
-    if (velocity < -200) {
-      velocity = -200;
+    if (pVelocity < -200) {
+      pVelocity = -200;
     }    
     panMotor->run(BACKWARD);
-    panMotor->setSpeed(abs(velocity)); 
+    panMotor->setSpeed(-1*pVelocity)); 
   }
   
+  tVelocity = tError_p*tkp; // + pError_i*pki;
+  if (tVelocity > 0) {
+    if (tVelocity > 200) {
+      tVelocity = 200;
+    }
+    tiltMotor->run(FORWARD);
+    tiltMotor->setSpeed(tVelocity);
+  } else {
+    if (tVelocity < -200) {
+      tVelocity = -200;
+    }    
+    tiltMotor->run(BACKWARD);
+    tiltMotor->setSpeed(-1*tVelocity)); 
+  }
+
   time = millis();
   if (time - ptime > 500) {
-    Serial.println(angle);
-    Serial.println(error_p);
-    Serial.println(error_i);
-    Serial.println(velocity);
+    Serial.println(pAngle);
+    Serial.println(tAngle);
+    Serial.println(pError_p);
+    Serial.println(tError_p);
+    Serial.println(pVelocity);
+    Serial.println(tVelocity);
     Serial.println("");
     ptime = time;
   }
 }
 
-void ISRchanA()
+void ISR_pan()
 {
-  if (digitalRead(A_pin) == digitalRead(B_pin)) {
+  if (digitalRead(p_pin) == digitalRead(p_pin_B)) {
     counter++;
   } else {
     counter--;
   }
 }
 
-void ISRchanB()
+void ISR_tilt()
 {
-  if (digitalRead(A_pin) == digitalRead(B_pin)) {
-    counter--;
-  } else {
+  if (digitalRead(t_pin) == digitalRead(t_pin_B)) {
     counter++;
+  } else {
+    counter--;
   }
 }
 
