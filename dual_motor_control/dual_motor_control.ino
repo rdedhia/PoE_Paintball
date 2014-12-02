@@ -9,6 +9,8 @@
 #define t_pin_B 5
 #define pNum_ticks 720
 #define tNum_ticks 1620
+#define tPot A1
+#define pPot A2
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
@@ -20,14 +22,14 @@ Adafruit_DCMotor *tiltMotor = AFMS.getMotor(2);
 // Encoder stuff (counters and ticks)
 volatile int pCounter;
 volatile int tCounter;
-const byte pDivider = pNum_ticks / 360.
-const float tDivider = tNum_ticks / 360.
+const byte pDivider = pNum_ticks / 360.;
+const float tDivider = tNum_ticks / 360.;
 
 // Angle measures
 float pAngle;
 float tAngle;
-float pTarget_angle = 180;
-float tTarget_angle = 180;
+float pTarget_angle = 0;
+float tTarget_angle = 0;
 
 // Printing timing
 double time;
@@ -53,6 +55,8 @@ void setup() {
   pinMode(t_pin, INPUT);
   pinMode(p_pin_B, INPUT);
   pinMode(t_pin_B, INPUT);
+  pinMode(tPot, INPUT);
+  pinMode(pPot, INPUT);
   // enable internal pullup resistors
   digitalWrite(p_pin, 1);
   digitalWrite(t_pin, 1);
@@ -71,6 +75,8 @@ void loop() {
   // calculating angle from counters by scaling it
   pAngle = (pCounter % pNum_ticks) / pDivider;
   tAngle = (tCounter % tNum_ticks) / tDivider;
+  pTarget_angle = map(analogRead(pPot),0,255,0,15);
+  tTarget_angle = map(analogRead(tPot),0,255,0,100);
 
   // calculating and setting error terms
   pError_p = pTarget_angle - pAngle;
@@ -88,62 +94,62 @@ void loop() {
   // calculating velocities and running motors from error terms
   pVelocity = pError_p*pkp; // + pError_i*pki;
   if (pVelocity > 0) {
-    if (pVelocity > 200) {
-      pVelocity = 200;
+    if (pVelocity > 255) {
+      pVelocity = 255;
     }
     panMotor->run(FORWARD);
     panMotor->setSpeed(pVelocity);
   } else {
-    if (pVelocity < -200) {
-      pVelocity = -200;
+    if (pVelocity < -255) {
+      pVelocity = -255;
     }    
     panMotor->run(BACKWARD);
-    panMotor->setSpeed(-1*pVelocity)); 
+    panMotor->setSpeed(-1*pVelocity); 
   }
   
   tVelocity = tError_p*tkp; // + pError_i*pki;
   if (tVelocity > 0) {
-    if (tVelocity > 200) {
-      tVelocity = 200;
+    if (tVelocity > 255) {
+      tVelocity = 255;
     }
     tiltMotor->run(FORWARD);
     tiltMotor->setSpeed(tVelocity);
   } else {
-    if (tVelocity < -200) {
-      tVelocity = -200;
+    if (tVelocity < -255) {
+      tVelocity = -255;
     }    
     tiltMotor->run(BACKWARD);
-    tiltMotor->setSpeed(-1*tVelocity)); 
+    tiltMotor->setSpeed(-1*tVelocity); 
   }
 
   time = millis();
-  if (time - ptime > 500) {
+  if (time - prev_time > 500) {
     Serial.println(pAngle);
-    Serial.println(tAngle);
-    Serial.println(pError_p);
-    Serial.println(tError_p);
+    Serial.println(pError_p); 
     Serial.println(pVelocity);
+    Serial.println(tAngle);
+    Serial.println(tError_p);
     Serial.println(tVelocity);
     Serial.println("");
-    ptime = time;
+    prev_time = time;
   }
 }
 
 void ISR_pan()
 {
   if (digitalRead(p_pin) == digitalRead(p_pin_B)) {
-    counter++;
+    pCounter++;
   } else {
-    counter--;
+    pCounter--;
   }
 }
 
 void ISR_tilt()
 {
   if (digitalRead(t_pin) == digitalRead(t_pin_B)) {
-    counter++;
+    tCounter++;
   } else {
-    counter--;
+    tCounter--;
   }
 }
 
