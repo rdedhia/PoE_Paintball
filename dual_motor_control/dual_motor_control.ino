@@ -1,23 +1,15 @@
-// Include necessary modules for Adafruit motor shield
-#include <Wire.h>
-#include <Adafruit_MotorShield.h>
-#include "utility/Adafruit_PWMServoDriver.h"
+#include "DualMC33926MotorShield.h"
 
 #define p_pin 2
 #define t_pin 3
-#define p_pin_B 4
-#define t_pin_B 5
+#define p_pin_B 5
+#define t_pin_B 6
 #define pNum_ticks 720
 #define tNum_ticks 1620
-#define tPot A1
-#define pPot A2
+// #define tPot A1
+// #define pPot A2
 
-// Create the motor shield object with the default I2C address
-Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
-
-// Select which 'port' M1, M2, M3 or M4. In this case, M1
-Adafruit_DCMotor *panMotor = AFMS.getMotor(1);
-Adafruit_DCMotor *tiltMotor = AFMS.getMotor(2);
+DualMC33926MotorShield md;
 
 // Encoder stuff (counters and ticks)
 volatile int pCounter;
@@ -28,8 +20,8 @@ const float tDivider = tNum_ticks / 360.;
 // Angle measures
 float pAngle;
 float tAngle;
-float pTarget_angle = 0;
-float tTarget_angle = 0;
+float pTarget_angle = 10;
+float tTarget_angle = 20;
 
 // Printing timing
 double time;
@@ -38,11 +30,11 @@ double prev_time;
 // Motor control
 double pError_p;
 double tError_p;
-const float pkp = 30;
+const float pkp = 20;
 const float tkp = 40;
 //double pError_i;
 //double tError_i;
-//const float pki = 0;
+//const float pki = .002;
 //const float tki = 0;
 
 // Motor velocities
@@ -55,8 +47,8 @@ void setup() {
   pinMode(t_pin, INPUT);
   pinMode(p_pin_B, INPUT);
   pinMode(t_pin_B, INPUT);
-  pinMode(tPot, INPUT);
-  pinMode(pPot, INPUT);
+  // pinMode(tPot, INPUT);
+  // pinMode(pPot, INPUT);
   // enable internal pullup resistors
   digitalWrite(p_pin, 1);
   digitalWrite(t_pin, 1);
@@ -66,26 +58,24 @@ void setup() {
   attachInterrupt(0, ISR_pan, CHANGE);
   attachInterrupt(1, ISR_tilt, CHANGE);
   // Start motor shield
-  AFMS.begin();
-  //tell PySerial you're ready to go
-  Serial.print("Initialized!");
+  md.init();
 }
 
 void loop() {
   // calculating angle from counters by scaling it
   pAngle = (pCounter % pNum_ticks) / pDivider;
   tAngle = (tCounter % tNum_ticks) / tDivider;
-  pTarget_angle = map(analogRead(pPot),0,255,0,15);
-  tTarget_angle = map(analogRead(tPot),0,255,0,100);
+  // pTarget_angle = map(analogRead(pPot),0,255,0,15);
+  // tTarget_angle = map(analogRead(tPot),0,255,0,100);
 
   // calculating and setting error terms
   pError_p = pTarget_angle - pAngle;
-  //  pError_i += pError_p;
-  //  if (pError_i > 1000) {
-  //    pError_i = 1000;
-  //  }
+//  pError_i += pError_p;
+//  if (pError_i > 1000) {
+//    pError_i = 1000;
+//  }
     
-    tError_p = tTarget_angle - tAngle;
+  tError_p = tTarget_angle - tAngle;
   //  tError_i += tError_p;
   //  if (tError_i > 1000) {
   //    tError_i = 1000;
@@ -94,38 +84,34 @@ void loop() {
   // calculating velocities and running motors from error terms
   pVelocity = pError_p*pkp; // + pError_i*pki;
   if (pVelocity > 0) {
-    if (pVelocity > 255) {
-      pVelocity = 255;
+    if (pVelocity > 400) {
+      pVelocity = 400;
     }
-    panMotor->run(FORWARD);
-    panMotor->setSpeed(pVelocity);
+    md.setM1Speed(pVelocity);
   } else {
-    if (pVelocity < -255) {
-      pVelocity = -255;
+    if (pVelocity < -400) {
+      pVelocity = -400;
     }    
-    panMotor->run(BACKWARD);
-    panMotor->setSpeed(-1*pVelocity); 
+    md.setM1Speed(pVelocity);
   }
   
   tVelocity = tError_p*tkp; // + pError_i*pki;
   if (tVelocity > 0) {
-    if (tVelocity > 255) {
-      tVelocity = 255;
+    if (tVelocity > 400) {
+      tVelocity = 400;
     }
-    tiltMotor->run(FORWARD);
-    tiltMotor->setSpeed(tVelocity);
+    md.setM2Speed(tVelocity);
   } else {
-    if (tVelocity < -255) {
-      tVelocity = -255;
+    if (tVelocity < -400) {
+      tVelocity = -400;
     }    
-    tiltMotor->run(BACKWARD);
-    tiltMotor->setSpeed(-1*tVelocity); 
+    md.setM2Speed(tVelocity); 
   }
 
   time = millis();
-  if (time - prev_time > 500) {
+  if (time - prev_time > 10) {
     Serial.println(pAngle);
-    Serial.println(pError_p); 
+    Serial.println(pError_p);
     Serial.println(pVelocity);
     Serial.println(tAngle);
     Serial.println(tError_p);
