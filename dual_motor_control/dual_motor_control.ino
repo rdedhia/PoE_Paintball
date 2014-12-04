@@ -38,7 +38,7 @@ double prev_time;
 // Motor control
 double pError_p;
 double tError_p;
-const float pkp = 30;
+const float pkp = 60;
 const float tkp = 40;
 //double pError_i;
 //double tError_i;

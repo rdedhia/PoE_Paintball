@@ -20,7 +20,7 @@ void setup() {
   Serial.begin(9600);
   pan.write(0);
   tilt.write(0);
-  loader.write(0);
+  loader.write(0); 
 }
 
 
