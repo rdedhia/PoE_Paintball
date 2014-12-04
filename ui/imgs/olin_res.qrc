@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="newPrefix">
+    <file>olin.png</file>
+  </qresource>
+</RCC>
