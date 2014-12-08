@@ -4,9 +4,11 @@
 #define p_pin_B 5
 #define t_pin_B 6
 #define pNum_ticks 720
-#define tNum_ticks 6480
+#define tNum_ticks 1620
 #define tPot A3
-#define pPot A4
+#define pPot A3
+#define tlswitch 13
+#define plswitch 11
 
 // Create the motor shield object with the default I2C address
 DualMC33926MotorShield md;
@@ -31,7 +33,7 @@ double prev_time;
 // Motor control
 double pError_p;
 double tError_p;
-const float pkp = 60;
+const float pkp = 30;
 const float tkp = 40;
 //double pError_i;
 //double tError_i;
@@ -51,6 +53,7 @@ void setup() {
   pinMode(tPot, INPUT);
   pinMode(pPot, INPUT);
   pinMode(marker, OUTPUT);
+  pinMode(tlswitch, INPUT);
   // enable internal pullup resistors
   digitalWrite(p_pin, 1);
   digitalWrite(t_pin, 1);
@@ -62,6 +65,30 @@ void setup() {
   digitalWrite(marker,LOW);
   // Start motor shield
   md.init();
+  
+  boolean zero = LOW;
+  boolean tzero = HIGH;
+  boolean pzero = HIGH;
+  while (!zero) {
+    Serial.println("Zeroing");
+    if (pzero) {
+       md.setM1Speed(-100);
+       pzero = digitalRead(plswitch);
+    } else {
+      md.setM1Speed(0);
+    }
+    if (tzero) {
+       md.setM2Speed(-100);
+       tzero = digitalRead(tlswitch);
+    } else {
+      md.setM2Speed(0);
+    }
+    if (!tzero && !pzero) {
+      zero = HIGH;
+    }
+  } 
+  pCounter=0;
+  tCounter=0;
   //tell PySerial you're ready to go
   Serial.print("Initialized!");
 }
@@ -118,9 +145,9 @@ void loop() {
 
   time = millis();
   if (time - prev_time > 500) {
-    Serial.println(pTarget_angle);
-    Serial.println(pAngle);
-    Serial.println(pVelocity);
+    Serial.println(tTarget_angle);
+    Serial.println(tAngle);
+    Serial.println(tVelocity);
     Serial.println("");
     prev_time = time;
   }
@@ -138,9 +165,9 @@ void ISR_pan()
 void ISR_tilt()
 {
   if (digitalRead(t_pin) == digitalRead(t_pin_B)) {
-    tCounter--;
-  } else {
     tCounter++;
+  } else {
+    tCounter--;
   }
 }
 
