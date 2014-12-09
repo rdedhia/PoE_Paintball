@@ -4,7 +4,7 @@ import math
 
 def main():
     #initialize serial object (i.e. the arduino)
-    ser = serial.Serial('COM26', 9600, timeout=0)
+    ser = serial.Serial('/dev/tty.usbmodem1421', 9600, timeout=0)
     time.sleep(2) #you must allow 2s for arduino reset
     print ser.read(64) #should print "Begin!"
 

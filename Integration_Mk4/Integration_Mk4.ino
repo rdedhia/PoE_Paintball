@@ -9,6 +9,7 @@
 #define pPot A3
 #define tlswitch 13
 #define plswitch 11
+#define marker A2
 
 // Create the motor shield object with the default I2C address
 DualMC33926MotorShield md;
@@ -18,7 +19,6 @@ volatile int pCounter;
 volatile int tCounter;
 const byte pDivider = pNum_ticks / 360.;
 const float tDivider = tNum_ticks / 360.;
-const byte marker = 4;
 
 // Angle measures
 float pAngle;
@@ -36,6 +36,7 @@ double time;
 double prev_time;
 
 // Motor control
+int maxVelocity = 100;
 double pError_p;
 double tError_p;
 const float pkp = 30;
@@ -51,6 +52,12 @@ double tVelocity;
 
 //servo control
 int pos;
+//ServoTimer2 loadServo;
+
+//marker control
+long fireTime = 0;
+int fireDelay = 1000;
+boolean toFire = LOW;
 
 void setup() {
   Serial.begin(9600);
@@ -62,6 +69,7 @@ void setup() {
   pinMode(pPot, INPUT);
   pinMode(marker, OUTPUT);
   pinMode(tlswitch, INPUT);
+  //loadServo.attach(A3);
   // enable internal pullup resistors
   digitalWrite(p_pin, 1);
   digitalWrite(t_pin, 1);
@@ -70,7 +78,7 @@ void setup() {
   // using encoders with interrupts
   attachInterrupt(0, ISR_pan, CHANGE);
   attachInterrupt(1, ISR_tilt, CHANGE);
-  digitalWrite(marker,LOW);
+  //loadServo.write(544);
   // Start motor shield
   md.init();
   
@@ -78,6 +86,7 @@ void setup() {
   boolean tzero = HIGH;
   boolean pzero = HIGH;
   while (!zero) {
+    delay(50);
     Serial.println("Zeroing");
     if (pzero) {
        md.setM1Speed(-100);
@@ -110,19 +119,20 @@ void loop() {
     pTarget_angle = panString.toInt();
     tTarget_angle = tiltString.toInt();
     
-//    load();
-//    fire();
+    //start fire timer
+    fireTime = millis();
+    toFire = HIGH;
     
-    Serial.println(pTarget_angle);
-    Serial.println(pAngle);
+    //Serial.println(pTarget_angle);
+    //Serial.println(pAngle);
   }
   
   
   // calculating angle from counters by scaling it
   pAngle = (pCounter % pNum_ticks) / pDivider;
   tAngle = (tCounter % tNum_ticks) / tDivider;
-  pTarget_angle = map(analogRead(pPot),0,1023,0,30);
-  tTarget_angle = map(analogRead(tPot),0,1023,0,30);
+  //pTarget_angle = map(analogRead(pPot),0,1023,0,30);
+  //tTarget_angle = map(analogRead(tPot),0,1023,0,30);
 
   // calculating and setting error terms
   pError_p = pTarget_angle - pAngle;    
@@ -130,36 +140,45 @@ void loop() {
 
   
   pVelocity = pError_p*pkp;
-  if (pVelocity > 400) {
-      pVelocity = 400;
+  if (pVelocity > maxVelocity) {
+      pVelocity = maxVelocity;
     }
   
-    if (pVelocity < -400) {
-      pVelocity = -400;
+    if (pVelocity < -maxVelocity) {
+      pVelocity = -maxVelocity;
     }    
     md.setM1Speed(pVelocity); 
   
   
   tVelocity = tError_p*tkp; // + pError_i*pki;
   
-    if (tVelocity > 400) {
-      tVelocity = 400;
+    if (tVelocity > maxVelocity) {
+      tVelocity = maxVelocity;
     }
   
-    if (tVelocity < -400) {
-      tVelocity = -400;
+    if (tVelocity < -maxVelocity) {
+      tVelocity = -maxVelocity;
     }    
     md.setM2Speed(tVelocity); 
   
 
   time = millis();
   if (time - prev_time > 500) {
+    Serial.println(pTarget_angle);
+    Serial.println(pAngle);
+    Serial.println(pVelocity);
     Serial.println(tTarget_angle);
     Serial.println(tAngle);
     Serial.println(tVelocity);
     Serial.println("");
     prev_time = time;
   }
+  if ( (time-fireTime > fireDelay) && toFire) {
+    toFire = LOW;
+    //load();
+    fire();
+  }
+  
 }
 
 void ISR_pan()
@@ -182,23 +201,23 @@ void ISR_tilt()
 
 //void load() 
 //{ 
-//  for(pos = 60; pos < 160; pos += 1)  // goes from 0 degrees to 180 degrees 
+//  for(pos = 544; pos < 2400; pos += 10)  // goes from 0 degrees to 180 degrees 
 //  {                                  // in steps of 1 degree 
-//    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+//    loadServo.write(pos);              // tell servo to go to position in variable 'pos' 
 //    delay(10);                       // waits 15ms for the servo to reach the position 
 //  }
-//  delay(1000);
-//  for(pos = 160; pos>= 60; pos -= 1)     // goes from 180 degrees to 0 degrees 
+//  for(pos = 2400; pos>= 544; pos -= 10)     // goes from 180 degrees to 0 degrees 
 //  {                                
-//    myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+//    loadServo.write(pos);               // tell servo to go to position in variable 'pos' 
 //    delay(10);                       // waits 15ms for the servo to reach the position 
 //  }
+//  delay(200);
 //}
 
-//void fire() 
-//{
-//  digitalWrite(marker, HIGH);
-//  delay(2);
-//  digitalWrite(marker, LOW);
-//}
+void fire() 
+{
+  digitalWrite(marker, HIGH);
+  delay(2);
+  digitalWrite(marker, LOW);
+}
 
