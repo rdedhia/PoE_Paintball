@@ -36,7 +36,7 @@ double time;
 double prev_time;
 
 // Motor control
-int maxVelocity = 100;
+int maxVelocity = 150;
 double pError_p;
 double tError_p;
 const float pkp = 30;
@@ -85,8 +85,8 @@ void setup() {
   boolean tzero = HIGH;
   boolean pzero = HIGH;
   while (!zero) {
-    delay(50);
-    Serial.println("Zeroing");
+//    delay(50);
+//    Serial.println("Zeroing");
     if (pzero) {
        md.setM1Speed(-100);
        pzero = digitalRead(plswitch);
@@ -122,8 +122,12 @@ void loop() {
     fireTime = millis();
     toFire = HIGH;
     
-    //Serial.println(pTarget_angle);
-    //Serial.println(pAngle);
+    Serial.println(pTarget_angle);
+    Serial.println(pAngle);
+    Serial.println(pVelocity);
+    Serial.println(tTarget_angle);
+    Serial.println(tAngle);
+    Serial.println(tVelocity);
   }
   
   
@@ -158,20 +162,20 @@ void loop() {
     if (tVelocity < -maxVelocity) {
       tVelocity = -maxVelocity;
     }    
-    md.setM2Speed(tVelocity); 
+    md.setM2Speed(tVelocity);
   
 
   time = millis();
-  if (time - prev_time > 500) {
-    Serial.println(pTarget_angle);
-    Serial.println(pAngle);
-    Serial.println(pVelocity);
-    Serial.println(tTarget_angle);
-    Serial.println(tAngle);
-    Serial.println(tVelocity);
-    Serial.println("");
-    prev_time = time;
-  }
+//  if (time - prev_time > 500) {
+//    Serial.println(pTarget_angle);
+//    Serial.println(pAngle);
+//    Serial.println(pVelocity);
+//    Serial.println(tTarget_angle);
+//    Serial.println(tAngle);
+//    Serial.println(tVelocity);
+//    Serial.println("");
+//    prev_time = time;
+//  }
   if ( (time-fireTime > fireDelay) && toFire) {
     toFire = LOW;
     //load();
@@ -204,4 +208,3 @@ void fire()
   delay(2);
   digitalWrite(marker, LOW);
 }
-
