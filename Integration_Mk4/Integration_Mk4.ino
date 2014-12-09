@@ -52,11 +52,10 @@ double tVelocity;
 
 //servo control
 int pos;
-//ServoTimer2 loadServo;
 
 //marker control
 long fireTime = 0;
-int fireDelay = 1000;
+int fireDelay = 5000;
 boolean toFire = LOW;
 
 void setup() {
@@ -198,21 +197,6 @@ void ISR_tilt()
     tCounter--;
   }
 }
-
-//void load() 
-//{ 
-//  for(pos = 544; pos < 2400; pos += 10)  // goes from 0 degrees to 180 degrees 
-//  {                                  // in steps of 1 degree 
-//    loadServo.write(pos);              // tell servo to go to position in variable 'pos' 
-//    delay(10);                       // waits 15ms for the servo to reach the position 
-//  }
-//  for(pos = 2400; pos>= 544; pos -= 10)     // goes from 180 degrees to 0 degrees 
-//  {                                
-//    loadServo.write(pos);               // tell servo to go to position in variable 'pos' 
-//    delay(10);                       // waits 15ms for the servo to reach the position 
-//  }
-//  delay(200);
-//}
 
 void fire() 
 {
