@@ -1,7 +1,7 @@
 #include "DualMC33926MotorShield.h"
 
 #define A_pin 2
-#define B_pin 3
+#define B_pin 5
 #define num_ticks 1440
 
 int motorspeed = 0;
@@ -28,7 +28,7 @@ void setup() {
   digitalWrite(B_pin, 1);
   // using encoders
   attachInterrupt(0, ISRchanA, CHANGE);
-  attachInterrupt(1, ISRchanB, CHANGE);
+//  attachInterrupt(1, ISRchanB, CHANGE);
   // Start motor shield
   md.init();
 }
@@ -41,8 +41,8 @@ void loop() {
   if (time - ptime > 500) {
     Serial.println(counter);
     Serial.println(counterA);
-    Serial.println(counterB);
-    Serial.println(counterC);
+//    Serial.println(counterB);
+//    Serial.println(counterC);
     Serial.println("");
     ptime = time;
   }

@@ -5,9 +5,11 @@
 #define t_pin_B 6
 #define pNum_ticks 720
 #define tNum_ticks 1620
+#define tPot A3
+#define pPot A3
 #define tlswitch 13
-#define plswitch A2
-#define marker 11
+#define plswitch 11
+#define marker A2
 
 // Create the motor shield object with the default I2C address
 DualMC33926MotorShield md;
@@ -34,10 +36,10 @@ double time;
 double prev_time;
 
 // Motor control
-int maxVelocity = 200;
+int maxVelocity = 100;
 double pError_p;
 double tError_p;
-const float pkp = 40;
+const float pkp = 30;
 const float tkp = 40;
 //double pError_i;
 //double tError_i;
@@ -83,7 +85,6 @@ void setup() {
   boolean tzero = HIGH;
   boolean pzero = HIGH;
   while (!zero) {
-  // delay(50);
     if (pzero) {
        md.setM1Speed(-100);
        pzero = digitalRead(plswitch);
@@ -119,14 +120,19 @@ void loop() {
     fireTime = millis();
     toFire = HIGH;
     
-    Serial.println(pTarget_angle);
-    Serial.println(pAngle);
-    Serial.println(pVelocity);
-    Serial.println(tTarget_angle);
-    Serial.println(tAngle);
-    Serial.println(tVelocity);
+//    Serial.println(incoming);
+//    Serial.println(panString);
+//    Serial.println(tiltString);
+     
   }
-  
+  digitalWrite(toFire, 13);
+  if (toFire) {
+    fireTime = millis();
+    if (time-fireTime > fireDelay) {
+      toFire = LOW;
+      fire();
+    }
+  }
   
   // calculating angle from counters by scaling it
   pAngle = (pCounter % pNum_ticks) / pDivider;
@@ -159,10 +165,9 @@ void loop() {
     if (tVelocity < -maxVelocity) {
       tVelocity = -maxVelocity;
     }    
-    md.setM2Speed(tVelocity);
+    md.setM2Speed(tVelocity); 
   
-
-  time = millis();
+//  time = millis();
 //  if (time - prev_time > 500) {
 //    Serial.println(pTarget_angle);
 //    Serial.println(pAngle);
@@ -173,11 +178,6 @@ void loop() {
 //    Serial.println("");
 //    prev_time = time;
 //  }
-  if ( (time-fireTime > fireDelay) && toFire) {
-    toFire = LOW;
-    //load();
-    fire();
-  }
   
 }
 
@@ -201,6 +201,9 @@ void ISR_tilt()
 
 void fire() 
 {
+  digitalWrite(13, LOW);
+  delay(2);
+  digitalWrite(13, HIGH);
   digitalWrite(marker, HIGH);
   delay(2);
   digitalWrite(marker, LOW);
