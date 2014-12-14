@@ -4,7 +4,13 @@ import math
 
 # err = win32.GetOverlappedResult(self.hComPort, self._overlappedWrite, ctypes.byref(n), True)
 
-def main():
+
+def final_main(coordinates):
+    """Assume that coordinates is an Nx3 matrix, where the 3 is
+    pan and tilt angle and color, and N is the number of coordinates
+    we have.
+    """
+
     #initialize serial object (i.e. the arduino)
     ser = serial.Serial('COM24', 9600, timeout=0)
     ser.close()
@@ -12,29 +18,73 @@ def main():
     time.sleep(2) #you must allow 2s for arduino reset
     print ser.read(64) #should print "Begin!"
 
-    # ser2 = serial.Serial('COM25', 9600, timeout=0)
-    # ser2.close()
-    # ser2.open()
-    # time.sleep(2) #you must allow 2s for arduino reset
-    # print ser2.read(64) #should print "Begin!"
+    ser2 = serial.Serial('COM25', 9600, timeout=0)
+    ser2.close()
+    ser2.open()
+    time.sleep(2) #you must allow 2s for arduino reset
+    print ser2.read(64) #should print "Begin!"
 
-    while (1):
-        if ser.isOpen():# and ser2.isOpen():
+    for coord in coordinates:
+        if ser.isOpen() and ser2.isOpen():
             while ser.inWaiting():
                 print ser.readline()
-            pan = raw_input("Pan Angle: ")
-            tilt = raw_input("Tilt Angle: ")
+            pan = coord[0]
+            tilt = coord[1]
+            color = coord[2]
             if pan == "q":
                 break
             output = pan+tilt
             print output
             print ""
             ser.write(output)
-            # ser2.write(output)
+            ser2.write(color)
 
     print "Closing"
     ser.close() # Close the serial port
-    # ser2.close()
+    ser2.close()
+
+
+def main():
+    colors = {
+        "blue": "0",
+        "orange": "1",
+        "yellow": "2"
+    }
+    #initialize serial object (i.e. the arduino)
+    # ser = serial.Serial('COM24', 9600, timeout=0)
+    # ser.close()
+    # ser.open()
+    # time.sleep(2) #you must allow 2s for arduino reset
+    # print ser.read(64) #should print "Begin!"
+
+    ser2 = serial.Serial('COM25', 9600, timeout=0)
+    ser2.close()
+    ser2.open()
+    time.sleep(2) #you must allow 2s for arduino reset
+    print ser2.read(64) #should print "Begin!"
+
+    while (1):
+        if ser2.isOpen():# and ser.isOpen():
+            # while ser2.inWaiting():
+            #     print ser2.readline()
+            pan = raw_input("Pan Angle: ")
+            tilt = raw_input("Tilt Angle: ")
+            try:
+                color = colors[raw_input("blue, orange, or yellow?: ").lower()]
+            except KeyError: 
+                # make color blue if invalid input given
+                color = "0"
+            if pan == "q":
+                break
+            output = pan+tilt
+            print color
+            print ""
+            # ser.write(output)
+            ser2.write(color)
+
+    print "Closing"
+    # ser.close() # Close the serial port
+    ser2.close()
 
 
 def arctan(x):
