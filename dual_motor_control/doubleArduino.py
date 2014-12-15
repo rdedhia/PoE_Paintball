@@ -45,45 +45,40 @@ def final_main(coordinates):
 
 
 def main():
-    colors = {
-        "blue": "0",
-        "orange": "1",
-        "yellow": "2"
-    }
     #initialize serial object (i.e. the arduino)
-    # ser = serial.Serial('COM24', 9600, timeout=0)
-    # ser.close()
-    # ser.open()
-    # time.sleep(2) #you must allow 2s for arduino reset
-    # print ser.read(64) #should print "Begin!"
+    ser = serial.Serial('COM27', 9600, timeout=0)
+    ser.close()
+    ser.open()
+    time.sleep(2) #you must allow 2s for arduino reset
+    print ser.read(64) #should print "Begin!"
 
-    ser2 = serial.Serial('COM25', 9600, timeout=0)
+    ser2 = serial.Serial('COM24', 9600, timeout=0)
     ser2.close()
     ser2.open()
     time.sleep(2) #you must allow 2s for arduino reset
     print ser2.read(64) #should print "Begin!"
 
     while (1):
-        if ser2.isOpen():# and ser.isOpen():
-            # while ser2.inWaiting():
-            #     print ser2.readline()
+        if ser2.isOpen() and ser.isOpen():
+            while ser.inWaiting():
+                print ser.readline()
             pan = raw_input("Pan Angle: ")
             tilt = raw_input("Tilt Angle: ")
             try:
-                color = colors[raw_input("blue, orange, or yellow?: ").lower()]
+                color = raw_input("1 or 2?: ")
             except KeyError: 
-                # make color blue if invalid input given
-                color = "0"
+                # make color 1 if invalid input given
+                color = "1"
             if pan == "q":
                 break
             output = pan+tilt
             print color
             print ""
-            # ser.write(output)
+            ser.write(output)
             ser2.write(color)
 
     print "Closing"
-    # ser.close() # Close the serial port
+    ser.close() # Close the serial port
     ser2.close()
 
 
