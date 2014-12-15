@@ -1,1 +1,1 @@
-This is the repo for Team Ballz final project for Principals of Engineering (PoE). We built a robot that paints with paintballs, check out the website a poe.olin.edu/poe2014/ballz
+This is the repo for Team Ballz final project for Principals of Engineering (PoE). We built a robot that paints with paintballs, check out the website at http://poe.olin.edu/poe2014/ballz
